@@ -90,25 +90,32 @@ named!(f_1<Formula>, alt!(
     do_parse!(not >> f: f_1 >> (Formula::Not(Box::new(f))))
     | f_0
 ));
-named!(f_2<Formula>, alt!(
-    do_parse!(f1: ws!(f_1) >> infix_and >> f2: ws!(f_2) >> (Formula::And(as_vec(&[&f1, &f2]))))
-    | f_1
+
+named!(f_2<Formula>, do_parse!(
+    f1: f_1 >>
+    end: fold_many0!(preceded!(ws!(infix_and), f_1), f1, |f1, f2| Formula::And(as_vec(&[&f1, &f2]))) >>
+    (end)
 ));
-named!(f_3<Formula>, alt!(
-    do_parse!(f1: ws!(f_2) >> infix_or >> f2: ws!(f_3) >> (Formula::Or(as_vec(&[&f1, &f2]))))
-    | f_2
+named!(f_3<Formula>,do_parse!(
+    f1: f_2 >>
+    end: fold_many0!(preceded!(ws!(infix_or), f_2), f1, |f1, f2| Formula::Or(as_vec(&[&f1, &f2]))) >>
+    (end)
 ));
-named!(f_4<Formula>, alt!(
-    do_parse!(f1: ws!(f_3) >> infix_xor >> f2: ws!(f_4) >> (Formula::Odd(as_vec(&[&f1, &f2]))))
-    | f_3
+named!(f_4<Formula>, do_parse!(
+    f1: f_3 >>
+    end: fold_many0!(preceded!(ws!(infix_xor), f_3), f1, |f1, f2| Formula::Odd(as_vec(&[&f1, &f2]))) >>
+    (end)
 ));
-named!(f_5<Formula>, alt!(
-    do_parse!(f1: ws!(f_4) >> infix_equiv >> f2: ws!(f_5) >> (Formula::Equiv(as_vec(&[&f1, &f2]))))
-    | f_4
+named!(f_5<Formula>, do_parse!(
+    f1: f_4 >>
+    end: fold_many0!(preceded!(ws!(infix_equiv), f_4), f1, |f1, f2| Formula::Equiv(as_vec(&[&f1, &f2]))) >>
+    (end)
 ));
-named!(f_6<Formula>, alt!(
-    do_parse!(f1: ws!(f_5) >> infix_imply >> f2: ws!(f_6) >> (Formula::Imply(Box::new(f1), Box::new(f2))))
-    | f_5
+named!(f_6<Formula>, do_parse!(
+    f1: f_5 >>
+    other: many0!(preceded!(ws!(infix_imply), f_5)) >>
+    ({let r = other.into_iter().rev();
+    r.fold(f1, |deep, next| Formula::Imply(Box::new(next), Box::new(deep)))})
 ));
 named!(f_7<Formula>, alt!(
     do_parse!(ws!(and) >> f_vec: formula_list >> (Formula::And(f_vec)))
@@ -121,19 +128,16 @@ named!(f_7<Formula>, alt!(
     | do_parse!( lu: brackets >> f_vec : formula_list >> (Formula::Between(lu.0, lu.1, f_vec)))
     | f_6
 ));
-named!(pub formula<Formula>, alt!(
-    do_parse!(f: ws!(f_6) >> c: complete!(comment) >> (Formula::Comment(Box::new(f), c)))
-    | f_7
-));
+named!(pub formula<Formula>,  ws!(f_7));
 named!(f<F>, map!(formula, Box::new));
 
 named!(statement<Statement>,
-    alt!(
+    tap!(id: alt!(
         do_parse!(id: identifier >> tag!(";") >> (Statement::Name(id)) )
         | do_parse!(id: ws!(identifier) >> def >> f: ws!(f) >> tag!(";") >> (Statement::Defined(id, f)))
         | do_parse!(assign >> f: ws!(f) >> tag!(";") >> (Statement::Assigned(f)))
         | do_parse!(c: comment >> (Statement::Comment(c)))
-    )
+    ) => {println!("N? {:?}", id)})
 );
 named!(circuit<Vec<Statement> >, many1!(ws!(statement)));
 named!(pub bcsat<BCSAT>, do_parse!(

@@ -11,18 +11,18 @@ pub enum Constant {
 }
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Formula {
+    Named(String),
+    Constant(Constant),
     Comment(F, String),
+    Imply(F, F),
+    ITE(F, F, F),
+    Not(F),
     Equiv(Vec<F>),
     Or(Vec<F>),
     And(Vec<F>),
     Odd(Vec<F>),
     Even(Vec<F>),
-    Imply(F, F),
-    ITE(F, F, F),
     Between(usize, usize, Vec<F>),
-    Not(F),
-    Named(String),
-    Constant(Constant),
 }
 impl<'a> From<&'a str> for Formula {
     fn from(f: &'a str) -> Self {
