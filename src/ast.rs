@@ -13,11 +13,11 @@ pub enum Constant {
 pub enum Formula {
     Comment(F, String),
     Equiv(Vec<F>),
-    Imply(Vec<F>),
     Or(Vec<F>),
     And(Vec<F>),
     Odd(Vec<F>),
     Even(Vec<F>),
+    Imply(F, F),
     ITE(F, F, F),
     Between(usize, usize, Vec<F>),
     Not(F),

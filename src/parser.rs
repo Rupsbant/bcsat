@@ -37,6 +37,15 @@ named!(brackets<(usize, usize)>,
         tag!("["),
         separated_pair!(int, tag!(","), int),
         tag!("]")));
+named!(pair<(F, F)>,
+    do_parse!(
+        tag!("(") >>
+        x: f >>
+        tag!(",") >>
+        y: f >>
+        tag!(")") >>
+        (x,y)
+    ));
 named!(triple<(F, F, F)>,
     do_parse!(
         tag!("(") >>
@@ -98,7 +107,7 @@ named!(f_5<Formula>, alt!(
     | f_4
 ));
 named!(f_6<Formula>, alt!(
-    do_parse!(f1: ws!(f_5) >> infix_imply >> f2: ws!(f_6) >> (Formula::Imply(as_vec(&[&f1, &f2]))))
+    do_parse!(f1: ws!(f_5) >> infix_imply >> f2: ws!(f_6) >> (Formula::Imply(Box::new(f1), Box::new(f2))))
     | f_5
 ));
 named!(f_7<Formula>, alt!(
@@ -107,7 +116,7 @@ named!(f_7<Formula>, alt!(
     | do_parse!(ws!(odd) >> f_vec: formula_list >> (Formula::Odd(f_vec)))
     | do_parse!(ws!(even) >> f_vec: formula_list >> (Formula::Even(f_vec)))
     | do_parse!(ws!(equiv) >> f_vec: formula_list >> (Formula::Equiv(f_vec)))
-    | do_parse!(ws!(imply) >> f_vec: formula_list >> (Formula::Imply(f_vec)))
+    | do_parse!(ws!(imply) >> p: pair >> (Formula::Imply(p.0, p.1)))
     | do_parse!(ws!(ite) >> tr: triple >> (Formula::ITE(tr.0, tr.1, tr.2)))
     | do_parse!( lu: brackets >> f_vec : formula_list >> (Formula::Between(lu.0, lu.1, f_vec)))
     | f_6
