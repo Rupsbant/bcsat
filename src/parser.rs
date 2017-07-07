@@ -131,14 +131,12 @@ named!(f_7<Formula>, alt!(
 named!(pub formula<Formula>,  ws!(f_7));
 named!(f<F>, map!(formula, Box::new));
 
-named!(statement<Statement>,
-    tap!(id: alt!(
-        do_parse!(id: identifier >> tag!(";") >> (Statement::Name(id)) )
-        | do_parse!(id: ws!(identifier) >> def >> f: ws!(f) >> tag!(";") >> (Statement::Defined(id, f)))
-        | do_parse!(assign >> f: ws!(f) >> tag!(";") >> (Statement::Assigned(f)))
-        | do_parse!(c: comment >> (Statement::Comment(c)))
-    ) => {println!("N? {:?}", id)})
-);
+named!(statement<Statement>,alt!(
+    do_parse!(id: identifier >> tag!(";") >> (Statement::Name(id)) )
+    | do_parse!(id: ws!(identifier) >> def >> f: ws!(f) >> tag!(";") >> (Statement::Defined(id, f)))
+    | do_parse!(assign >> f: ws!(f) >> tag!(";") >> (Statement::Assigned(f)))
+    | do_parse!(c: comment >> (Statement::Comment(c)))
+));
 named!(circuit<Vec<Statement> >, many1!(ws!(statement)));
 named!(pub bcsat<BCSAT>, do_parse!(
     h: header >>

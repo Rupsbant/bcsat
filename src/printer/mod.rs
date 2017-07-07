@@ -31,7 +31,6 @@ impl FormulaOptions {
             And(ref v) => self.and.nary(f, Op::And, self.display(v)),
             Or(ref v) => self.or.nary(f, Op::Or, self.display(v)),
             Between(l, u, ref v) => write!(f, "[{}, {}]{}", l, u, self.display(v)),
-
         }
     }
 }
