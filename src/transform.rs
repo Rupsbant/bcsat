@@ -46,12 +46,17 @@ pub fn join_full_assoc(f: Formula) -> Formula {
     use self::Formula::*;
     let red_assoc = &join_full_assoc;
     match f {
-        Equiv(v) => accumulate(Op::Equiv, v),
         Odd(v) => accumulate(Op::Odd, v),
         Even(v) => accumulate(Op::Even, v),
         And(v) => accumulate(Op::And, v),
         Or(v) => accumulate(Op::Or, v),
         Comment(form, com) => Comment(form.tb(red_assoc), com.clone()),
+        Equiv(mut v) => {
+            for e in v.iter_mut() {
+                transform_box(e, red_assoc);
+            }
+            Equiv(v)
+        }
         Imply(l, r) => Imply(l.tb(red_assoc), r.tb(red_assoc)),
         ITE(i, t, e) => ITE(i.tb(red_assoc), t.tb(red_assoc), e.tb(red_assoc)),
         Not(n) => Not(n.tb(red_assoc)),
