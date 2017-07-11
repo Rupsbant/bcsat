@@ -90,7 +90,7 @@ named!(f_1<Formula>, alt!(
     do_parse!(not >> f: f_1 >> (Formula::Not(Box::new(f))))
     | f_0
 ));
-
+// Left associative parsing of conjunction, parse a & b & c to (a & b) & c
 named!(f_2<Formula>, do_parse!(
     f1: f_1 >>
     end: fold_many0!(preceded!(ws!(infix_and), f_1), f1, |f1, f2| Formula::And(as_vec(&[&f1, &f2]))) >>
@@ -111,12 +111,15 @@ named!(f_5<Formula>, do_parse!(
     end: fold_many0!(preceded!(ws!(infix_equiv), f_4), f1, |f1, f2| Formula::Equiv(as_vec(&[&f1, &f2]))) >>
     (end)
 ));
+// Right associative parsing of implication.
+// a => b => c is equal to a => (b =>c)
 named!(f_6<Formula>, do_parse!(
     f1: f_5 >>
     other: many0!(preceded!(ws!(infix_imply), f_5)) >>
     ({let r = other.into_iter().rev();
     r.fold(f1, |deep, next| Formula::Imply(Box::new(next), Box::new(deep)))})
 ));
+// Either TLV parsing  (Tag-Length-Value) of formulas or prefix parsing with precedence.
 named!(f_7<Formula>, alt!(
     do_parse!(ws!(and) >> f_vec: formula_list >> (Formula::And(f_vec)))
     | do_parse!(ws!(or)  >> f_vec: formula_list >> (Formula::Or(f_vec)))
