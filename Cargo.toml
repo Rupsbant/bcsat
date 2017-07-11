@@ -2,6 +2,10 @@
 name = "bcsat"
 version = "0.1.0"
 authors = ["Ruben Lapauw <Ruben.Lapauw@cs.kuleuven.be>"]
+description = "A parser, printer and related utilities for BCSAT (http://users.ics.aalto.fi/tjunttil/bcsat/)"
+license = "MIT/Apache-2.0"
+repository = "https://github.com/Rupsbant/bcsat"
+readme = "README.md"
 
 [dependencies]
 nom = "^3.1"
