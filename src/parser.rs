@@ -87,7 +87,7 @@ named!(f_0<Formula>, terminated!(
     ), opt!(complete!(ws!(comment))))
 );
 named!(f_1<Formula>, alt!(
-    do_parse!(not >> f: f_1 >> (Formula::Not(Box::new(f))))
+    do_parse!(not >> f: f_1 >> (Formula::Not(From::from(f))))
     | f_0
 ));
 // Left associative parsing of conjunction, parse a & b & c to (a & b) & c
@@ -117,7 +117,7 @@ named!(f_6<Formula>, do_parse!(
     f1: f_5 >>
     other: many0!(preceded!(ws!(infix_imply), f_5)) >>
     ({let r = other.into_iter().rev();
-    r.fold(f1, |deep, next| Formula::Imply(Box::new(next), Box::new(deep)))})
+    r.fold(f1, |deep, next| Formula::Imply(From::from(next), From::from(deep)))})
 ));
 // Either TLV parsing  (Tag-Length-Value) of formulas or prefix parsing with precedence.
 named!(f_7<Formula>, alt!(
@@ -132,7 +132,7 @@ named!(f_7<Formula>, alt!(
     | f_6
 ));
 named!(pub formula<Formula>,  ws!(f_7));
-named!(f<F>, map!(formula, Box::new));
+named!(f<F>, map!(formula, From::from));
 
 named!(statement<Statement>,alt!(
     do_parse!(id: identifier >> tag!(";") >> (Statement::Name(id)) )
@@ -153,7 +153,7 @@ fn is_identifier_character(chr:u8) -> bool {
 
 fn as_vec<'a, T: ?Sized>(x: &'a [&T]) -> Vec<F> where Formula: From<&'a T> {
     x.iter()
-     .map(|x| Box::new(Formula::from(x)))
+     .map(|x| From::from(Formula::from(x)))
      .collect::<Vec<F>>()
 }
 

@@ -1,4 +1,6 @@
-pub type F = Box<Formula>;
+pub use std::rc::Rc;
+
+pub type F = Rc<Formula>;
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Header {
     major: usize,

@@ -4,16 +4,40 @@ pub mod join_assoc;
 
 impl BCSAT {
     pub fn transform<F>(&mut self, f: &F)
-        where F: Fn(Formula) -> Formula
+        where F: Fn(&Formula) -> Formula
+    {
+        for stm in self.statements.iter_mut() {
+            *stm = stm.transform(f)
+        }
+    }
+    pub fn rebuild<F>(&mut self, f: &F) -> Self
+        where F: Fn(&Formula) -> Formula
+    {
+        let statements = self.statements
+            .iter()
+            .map(|stm| {
+                     stm.transform(f)
+                 })
+            .collect::<Vec<_>>();
+        BCSAT {
+            header: self.header.clone(),
+            statements: statements,
+        }
+
+    }
+}
+impl Statement {
+    pub fn transform<F>(&self, f: &F) -> Statement
+        where F: Fn(&Formula) -> Formula
     {
         use self::Statement::*;
-        for stm in self.statements.iter_mut() {
-            match *stm {
-                Assigned(ref mut form) |
-                Defined(_, ref mut form) => transform_box(form, f),
-                _ => (),
-            }
-        }
+        let mut stm = self.clone();
+        match stm {
+            Assigned(ref mut form) |
+            Defined(_, ref mut form) => *form = Rc::from(f(form)),
+            _ => (),
+        };
+        stm
     }
 }
 impl Formula {
@@ -29,16 +53,4 @@ impl Formula {
     {
         f(self)
     }
-    pub fn tb<F>(mut self: Box<Self>, f: &F) -> Box<Self>
-        where F: Fn(Formula) -> Formula
-    {
-        self.transform(f);
-        self
-    }
-}
-
-pub fn transform_box<F>(b: &mut Box<Formula>, f: &F)
-    where F: Fn(Formula) -> Formula
-{
-    b.transform(f)
 }

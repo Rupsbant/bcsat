@@ -113,6 +113,15 @@ impl<'a, T> fmt::Display for PrintBCSAT<'a, Box<T>>
         d.fmt(f)
     }
 }
+use std::rc::Rc;
+impl<'a, T> fmt::Display for PrintBCSAT<'a, Rc<T>>
+    where for<'b> PrintBCSAT<'b, &'b T>: fmt::Display
+{
+    fn fmt<'x>(&'x self, f: &mut fmt::Formatter) -> fmt::Result {
+        let d: PrintBCSAT<'a, &'x T> = self.0.display(&self.1);
+        d.fmt(f)
+    }
+}
 impl<'a, T> fmt::Display for PrintBCSAT<'a, Vec<T>>
     where for<'b, 'c> PrintBCSAT<'b, &'c T>: fmt::Display
 {

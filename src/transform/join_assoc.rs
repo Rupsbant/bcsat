@@ -2,53 +2,50 @@ use ast::*;
 use printer::operators::*;
 use super::*;
 
-
-pub fn join_full_assoc(f: Formula) -> Formula {
+pub fn join_assoc_box(f: &Formula) -> F {
+    From::from(join_full_assoc(f))
+}
+pub fn join_full_assoc(f: &Formula) -> Formula {
     use self::Formula::*;
-    let red_assoc = &join_full_assoc;
-    match f {
-        Odd(v) => accumulate(Op::Odd, v),
-        Even(v) => accumulate(Op::Even, v),
-        And(v) => accumulate(Op::And, v),
-        Or(v) => accumulate(Op::Or, v),
-        Comment(form, com) => Comment(form.tb(red_assoc), com.clone()),
-        Equiv(mut v) => {
-            for e in v.iter_mut() {
-                transform_box(e, red_assoc);
-            }
-            Equiv(v)
+    match *f {
+        Odd(ref v) => accumulate(Op::Odd, v),
+        Even(ref v) => accumulate(Op::Even, v),
+        And(ref v) => accumulate(Op::And, v),
+        Or(ref v) => accumulate(Op::Or, v),
+        Comment(ref form, ref com) => Comment(join_assoc_box(form), com.clone()),
+        Equiv(ref v) => Equiv(v.iter().map(|e| join_assoc_box(e)).collect::<Vec<_>>()),
+        Imply(ref l, ref r) => Imply(join_assoc_box(&l), join_assoc_box(&r)),
+        ITE(ref i, ref t, ref e) => ITE(join_assoc_box(&i), join_assoc_box(&t), join_assoc_box(&e)),
+        Not(ref n) => Not(join_assoc_box(&n)),
+        Between(ref l, ref u, ref v) => {
+            Between(l.clone(),
+                    u.clone(),
+                    v.iter().map(|e| join_assoc_box(e)).collect::<Vec<_>>())
         }
-        Imply(l, r) => Imply(l.tb(red_assoc), r.tb(red_assoc)),
-        ITE(i, t, e) => ITE(i.tb(red_assoc), t.tb(red_assoc), e.tb(red_assoc)),
-        Not(n) => Not(n.tb(red_assoc)),
-        Between(l, u, mut v) => {
-            for e in v.iter_mut() {
-                transform_box(e, red_assoc);
-            }
-            Between(l, u, v)
-        }
-        f => f.clone(),
+        ref f => f.clone(),
     }
 }
-pub fn accumulate(mut op: Op, mut check: Vec<F>) -> Formula {
+pub fn accumulate(mut op: Op, check: &Vec<F>) -> Formula {
     use self::Formula::*;
     let mut rejected = vec![];
+    let mut check = check.clone();
     while let Some(f) = check.pop() {
+        let f = (*f).clone();
         match (op, f) {
-            (Op::Or, box Or(v)) |
-            (Op::And, box And(v)) |
-            (Op::Equiv, box Equiv(v)) |
-            (Op::Even, box Odd(v)) |
-            (Op::Odd, box Odd(v)) => check.extend(v.into_iter()),
-            (Op::Odd, box Even(v)) => {
+            (Op::Or, Or(v)) |
+            (Op::And, And(v)) |
+            (Op::Equiv, Equiv(v)) |
+            (Op::Even, Odd(v)) |
+            (Op::Odd, Odd(v)) => check.extend(v.into_iter()),
+            (Op::Odd, Even(v)) => {
                 op = Op::Even;
                 check.extend(v.into_iter())
             }
-            (Op::Even, box Even(v)) => {
+            (Op::Even, Even(v)) => {
                 op = Op::Odd;
                 check.extend(v.into_iter())
             }
-            (_, f) => rejected.push(f.tb(&join_full_assoc)),
+            (_, f) => rejected.push(join_assoc_box(&f)),
         }
     }
     rejected.reverse();
