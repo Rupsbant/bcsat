@@ -25,7 +25,7 @@ pub fn join_full_assoc(f: &Formula) -> Formula {
         ref f => f.clone(),
     }
 }
-pub fn accumulate(mut op: Op, check: &Vec<F>) -> Formula {
+fn accumulate(mut op: Op, check: &Vec<F>) -> Formula {
     use self::Formula::*;
     let mut rejected = vec![];
     let mut check = check.clone();

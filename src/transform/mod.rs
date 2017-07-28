@@ -10,7 +10,7 @@ impl BCSAT {
             *stm = stm.transform(f)
         }
     }
-    pub fn rebuild<F>(&mut self, f: &F) -> Self
+    pub fn rebuild<F>(&self, f: &F) -> Self
         where F: Fn(&Formula) -> Formula
     {
         let statements = self.statements
