@@ -15,7 +15,7 @@ pub enum Constant {
 pub enum Formula {
     Named(String),
     Constant(Constant),
-    Comment(F, String),
+    Comment(F, Rc<String>),
     Imply(F, F),
     ITE(F, F, F),
     Not(F),
