@@ -10,6 +10,7 @@ named!(infix_equiv, complete!(tag!("==")));
 named!(infix_imply, complete!(tag!("=>")));
 named!(infix_xor, complete!(tag!("^")));
 named!(and, tag_no_case!("AND"));
+named!(not_l, tag_no_case!("NOT"));
 named!(or, tag_no_case!("OR"));
 named!(odd, tag_no_case!("ODD"));
 named!(even, tag_no_case!("EVEN"));
@@ -121,7 +122,8 @@ named!(f_6<Formula>, do_parse!(
 ));
 // Either TLV parsing  (Tag-Length-Value) of formulas or prefix parsing with precedence.
 named!(f_7<Formula>, alt!(
-    do_parse!(ws!(and) >> f_vec: formula_list >> (Formula::And(f_vec)))
+    do_parse!(ws!(not_l) >> f: f >> (Formula::Not(f)))
+    | do_parse!(ws!(and) >> f_vec: formula_list >> (Formula::And(f_vec)))
     | do_parse!(ws!(or)  >> f_vec: formula_list >> (Formula::Or(f_vec)))
     | do_parse!(ws!(odd) >> f_vec: formula_list >> (Formula::Odd(f_vec)))
     | do_parse!(ws!(even) >> f_vec: formula_list >> (Formula::Even(f_vec)))
@@ -143,7 +145,7 @@ named!(statement<Statement>,alt!(
 named!(circuit<Vec<Statement> >, many1!(ws!(statement)));
 named!(pub bcsat<BCSAT>, do_parse!(
     h: header >>
-    c: circuit >>
+    c: circuit >> eof!() >>
     (BCSAT{header: h, statements: c})
 ));
 
